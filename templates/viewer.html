@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; background: #222; color: #ccc; font-family: sans-serif; }
+  h3 { padding: 6px; margin: 0; font-size: 14px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; }
+  .cell { width: 300px; text-align: center; }
+  .cell img { width: 100%; border: 1px solid #444; display: block; }
+  .cell .label { padding: 2px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h3>牌桌辨識即時畫面</h3>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const MAX_TABLES = 12;
+    const cells = [];
+
+    // 只建立一次所有格子
+    function init() {
+      const grid = document.getElementById('grid');
+      for (let i = 0; i < MAX_TABLES; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.style.display = 'none';   // 先隱藏,有圖才顯示
+
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = '桌 ' + i;
+
+        const img = document.createElement('img');
+
+        cell.appendChild(label);
+        cell.appendChild(img);
+        grid.appendChild(cell);
+        cells.push({ img: img, cell: cell });
+      }
+    }
+
+    // 雙緩衝:新圖在背景載入,完全載好才換上去,不閃
+    function refresh() {
+      const t = Date.now();
+      for (let i = 0; i < MAX_TABLES; i++) {
+        const target = cells[i];
+        const loader = new Image();
+        loader.onload = () => {
+          target.img.src = loader.src;      // 載完才換,瞬間替換不閃
+          target.cell.style.display = '';
+        };
+        loader.onerror = () => {
+          target.cell.style.display = 'none';   // 該圖不存在就隱藏
+        };
+        loader.src = 'live_roi_' + i + '.png?t=' + t;
+      }
+    }
+
+    init();
+    refresh();
+    setInterval(refresh, 1000);
+  </script>
+</body>
+</html>

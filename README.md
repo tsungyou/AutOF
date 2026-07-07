@@ -13,6 +13,6 @@ cd window/
 python window_data_generator.py
 
 # this will download yolo11n model for the first time;
-yolo classify train data=window_data.yaml model=yolo11n_custom.pt epochs=50 imgsz=640 
+yolo classify train data=window_data.yaml model=yolo11n_custom.pt epochs=50 imgsz=640 # 100 - 150 mins
 
 ```

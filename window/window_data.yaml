@@ -1,6 +1,0 @@
-path: window_dataset
-train: images/train
-val: images/validate
-
-names:
-  0: window
