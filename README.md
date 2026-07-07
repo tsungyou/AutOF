@@ -16,6 +16,7 @@ flowchart LR
     F --> G[PyAutoGUI]
     C --> H[live_roi_*.png]
     H --> I[viewer.html]
+```
 
-### How to build your own strategy?
+## How to build your own strategy?
 [GTO_AOF](https://github.com/tsungyou/AOF-GTO) for more details.
