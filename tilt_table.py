@@ -261,10 +261,10 @@ def get_window_regions(manager):
         print(f"💾 已將新座標儲存至快取檔案 {CACHE_FILE}, 建議將畫面截圖設成背景，方便下一次對照")
         return window_regions
 
-def detect_big_box(sct, model, index=1, retry_interval=10):
+def detect_big_box(sct, model, screen_index=0, retry_interval=10):
     """偵測大框,沒偵測到就重試直到有"""
     while True:
-        shot = cv2.cvtColor(np.array(sct.grab(sct.monitors[index])), cv2.COLOR_BGRA2BGR)
+        shot = cv2.cvtColor(np.array(sct.grab(sct.monitors[screen_index])), cv2.COLOR_BGRA2BGR)
         result = model(shot, verbose=False)[0]
         boxes = [b for b in result.boxes if float(b.conf[0]) > 0.5]
         if boxes:
@@ -300,7 +300,7 @@ def cache_path(rows, cols):
     return f"region_cache_{rows}x{cols}.json"
 
 
-def get_regions(sct, manager, rows, cols, index=1):
+def get_regions(sct, manager, rows, cols, screen_index=0):
     path = cache_path(rows, cols)
 
     # 有快取就問要不要用
@@ -319,7 +319,7 @@ def get_regions(sct, manager, rows, cols, index=1):
                 print("請輸入 y 或 n")
 
     # 沒快取,或選擇重新偵測:偵測大框 + 切割
-    big_box = detect_big_box(sct, manager.window_model, index=index)
+    big_box = detect_big_box(sct, manager.window_model, screen_index=screen_index)
     regions = split_into_regions(big_box, rows, cols)
 
     # 存快取(蓋過去)
@@ -328,9 +328,7 @@ def get_regions(sct, manager, rows, cols, index=1):
     print(f"💾 已儲存 {rows}x{cols} 快取至 {path}")
     return regions
 
-def main(index=0):
-    manager = ImageManager()
-def main(index=1):
+def main(screen_index=0):
     manager = ImageManager()
 
     with mss.MSS() as sct:
@@ -339,8 +337,18 @@ def main(index=1):
         cols = int(input("幾列 (cols): "))
 
         # 2. 依行列取 region(有快取問要不要用,沒有就偵測)
-        regions = get_regions(sct, manager, rows, cols, index=index)
+        regions = get_regions(sct, manager, rows, cols, screen_index=screen_index)
         print(f"使用 {len(regions)} 桌")
+
+        # screen init
+        for index, region in enumerate(regions):
+            frame = cv2.cvtColor(np.array(sct.grab(region)), cv2.COLOR_BGRA2BGR)
+            manager.update_image(frame)
+            manager.get_full_state()
+            manager.set_screen_offset(region["left"], region["top"])
+            
+            vis = manager.draw_rois_with_result()
+            cv2.imwrite("templates/live_roi_{}.png".format(index), vis)
 
         last_time = 0
         while True:
