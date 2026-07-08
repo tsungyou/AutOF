@@ -2,7 +2,7 @@
 ```python
 python3 -m venv .env
 source .env/bin/active
-python3 -r requirements.txt
+pip3 install -r requirements.txt
 python3 multitable.py
 ```
 
