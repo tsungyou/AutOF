@@ -164,38 +164,19 @@ class ImageManager:
         x, y = self.get_roi_screen_pos("aof_allin_button")
         pyautogui.click(x, y)
     
-    def run_actions(self, num_of_table: int) -> str:
-        """修改：回傳當前策略執行的簡短字串，方便稍後合併在同一行輸出"""
-        status_msg = "Waiting..."
+    def run_actions(self, num_of_table: int) -> None:
         if self.state['street'] == "preflop":
             hand_cards_string = holdem_hand_to_string(self.state['hand_cards'])
             d = self.data[self.data['hand'] == hand_cards_string]
             print(f"第[{num_of_table}]桌", datetime.now().strftime("%H:%M:%S"), prettify_cards(self.state['hand_cards']), d.values)
             
-            cards_display = prettify_cards(self.state['hand_cards'])
-            
-            if len(d) > 0:
-                sb_freq = d['sb_push_freq'].values[0]
-                bb_freq = d['bb_call_freq'].values[0]
-                if sb_freq > 0.5 and bb_freq > 0.5:
-                    self.click_aof_allin_button()
-                    status_msg = f"🚀 ALL-IN({cards_display})"
-                elif sb_freq < 0.1 and bb_freq < 0.1:
-                    self.click_aof_fold_button()
-                    status_msg = f"⛔ FOLD({cards_display})"
-                else:
-                    self.click_aof_fold_button()
-                    status_msg = f"條碼不符 FOLD({cards_display})"
-            else:
-                status_msg = f"未滿範圍({cards_display})"
-        return status_msg
 
 def prettify_cards(cards):
     prettify_str = ""
     for card in cards.values():
         if card:
             suit, rank = card[0].split('_')
-            prettify_str += f"{SUIT_EMOJI[suit]}{rank} "
+            prettify_str += f"{SUIT_EMOJI[suit]} {rank}"
     return prettify_str.strip()
 
 def holdem_hand_to_string(hand_cards, rank_string_map=None):
@@ -303,26 +284,53 @@ def split_into_regions(big_box, rows, cols):
             })
     return regions
 
+def cache_path(rows, cols):
+    """每種行列一個快取檔"""
+    return f"region_cache_{rows}x{cols}.json"
+
+
+def get_regions(sct, manager, rows, cols, index=1):
+    path = cache_path(rows, cols)
+
+    # 有快取就問要不要用
+    if os.path.exists(path):
+        while True:
+            choice = input(f"發現 {rows}x{cols} 的快取,是否使用?(y/n): ").strip().lower()
+            if choice == 'y':
+                with open(path) as f:
+                    regions = json.load(f)
+                print(f"✅ 已載入 {rows}x{cols} 快取,共 {len(regions)} 桌")
+                return regions
+            elif choice == 'n':
+                print("🔄 重新偵測並覆蓋...")
+                break
+            else:
+                print("請輸入 y 或 n")
+
+    # 沒快取,或選擇重新偵測:偵測大框 + 切割
+    big_box = detect_big_box(sct, manager.window_model, index=index)
+    regions = split_into_regions(big_box, rows, cols)
+
+    # 存快取(蓋過去)
+    with open(path, 'w') as f:
+        json.dump(regions, f, indent=4)
+    print(f"💾 已儲存 {rows}x{cols} 快取至 {path}")
+    return regions
 
 def main(index=0):
     manager = ImageManager()
+def main(index=1):
+    manager = ImageManager()
 
     with mss.MSS() as sct:
-        # 1. 偵測大框
-        big_box = detect_big_box(sct, manager.window_model, index=index)
-
-        # 2. 使用者輸入行列
+        # 1. 先輸入行列
         rows = int(input("幾行 (rows): "))
         cols = int(input("幾列 (cols): "))
 
-        # 3. 切成 region
-        regions = split_into_regions(big_box, rows, cols)
-        print(f"切成 {len(regions)} 桌")
+        # 2. 依行列取 region(有快取問要不要用,沒有就偵測)
+        regions = get_regions(sct, manager, rows, cols, index=index)
+        print(f"使用 {len(regions)} 桌")
 
-        # 打開 viewer
-        subprocess.run(["open", os.path.abspath("templates/viewer.html")])
-
-        # 4. 使用:每輪各桌截圖辨識
         last_time = 0
         while True:
             if time.time() - last_time < np.random.randint(5, 10):
@@ -336,11 +344,7 @@ def main(index=0):
                 manager.get_full_state()
                 manager.set_screen_offset(region["left"], region["top"])
                 
-                action_msg = manager.run_actions(num_of_table=index)
-                
-                vis = manager.draw_rois_with_result()
-                cv2.imwrite("templates/live_roi_{}.png".format(index), vis)
-
+                manager.run_actions(num_of_table=index)
                 
 if __name__ == "__main__":
     main()
