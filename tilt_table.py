@@ -217,50 +217,6 @@ def holdem_hand_to_string(hand_cards, rank_string_map=None):
     else: hand_cards_string += "o"
     return hand_cards_string
 
-
-# 💡 核心優化 1：載入快取與視窗偵測邏輯
-def get_window_regions(manager):
-    if os.path.exists(CACHE_FILE):
-        while True:
-            user_choice = input("發現上次的牌桌辨識快取紀錄！是否直接使用上一次的結果？(y/n): ").strip().lower()
-            if user_choice == 'y':
-                with open(CACHE_FILE, 'r') as f:
-                    window_regions = json.load(f)
-                print(f"✅ 已載入歷史快取，共計 {len(window_regions)} 個牌桌視窗。")
-                return window_regions
-            elif user_choice == 'n':
-                print("🔄 選擇重新進行 YOLO 畫面辨識...")
-                break
-            else:
-                print("請輸入 y 或 n")
-
-    print("🎯 開始截圖並進行 YOLO 牌桌視窗偵測...")
-    with mss.MSS() as sct:
-        monitor = sct.monitors[0]
-        shot = cv2.cvtColor(np.array(sct.grab(monitor)), cv2.COLOR_BGRA2BGR)
-        result = manager.window_model(shot, verbose=False)[0]
-        window_regions = []
-        
-        for box in result.boxes:
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
-            conf = float(box.conf[0])
-            if conf > 0.5:
-                window_regions.append({
-                    "left": int(x1), "top": int(y1), "width": int(x2-x1), "height": int(y2-y1),
-                })
-        
-        print("偵測完成，牌桌數: ", len(window_regions))
-        
-        for box in result.boxes:
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
-            cv2.rectangle(shot, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-        cv2.imwrite("templates/screen_shot.png", shot)
-        
-        with open(CACHE_FILE, 'w') as f:
-            json.dump(window_regions, f, indent=4)
-        print(f"💾 已將新座標儲存至快取檔案 {CACHE_FILE}, 建議將畫面截圖設成背景，方便下一次對照")
-        return window_regions
-
 def detect_big_box(sct, model, screen_index=0, retry_interval=10):
     """偵測大框,沒偵測到就重試直到有"""
     while True:
@@ -297,7 +253,7 @@ def split_into_regions(big_box, rows, cols):
 
 def cache_path(rows, cols):
     """每種行列一個快取檔"""
-    return f"region_cache_{rows}x{cols}.json"
+    return f"window_regions_caches/region_cache_{rows}x{cols}.json"
 
 
 def get_regions(sct, manager, rows, cols, screen_index=0):

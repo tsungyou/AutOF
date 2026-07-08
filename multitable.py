@@ -18,7 +18,7 @@ import sys  # 💡 導入系統標準輸出流模組
 pyautogui.FAILSAFE = True  
 
 LABEL_W, LABEL_H = 1330, 946
-CACHE_FILE = "window_regions_cache.json"  # 💡 快取檔案名稱
+CACHE_FILE = "window_regions_caches/window_regions_cache.json"  # 💡 快取檔案名稱
 
 XYS_ABSOLUTE = {
     "public_card_1": (379, 515, 391, 488),
