@@ -4,23 +4,63 @@
 <meta charset="utf-8">
 <style>
   body { margin: 0; background: #222; color: #ccc; font-family: sans-serif; }
-  h3 { padding: 6px; margin: 0; font-size: 14px; }
-  .grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; }
+  /* 頂部控制列 */
+  .control-panel { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #111; border-bottom: 1px solid #333; }
+  h3 { margin: 0; font-size: 14px; }
+  /* 適合深色風格的更新按鈕 */
+  .refresh-btn { background: #007bff; color: white; border: none; padding: 6px 14px; font-size: 12px; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+  .refresh-btn:hover { background: #0056b3; }
+  .refresh-btn:active { background: #004085; }
+  
+  /* 主要內容容器 */
+  .content { padding: 6px; }
+
+  /* 大螢幕截圖區塊 (寬度設定為小格子的兩倍左右) */
+  .screenshot-section { margin-bottom: 15px; padding-left: 6px; }
+  .screenshot-cell { width: 606px; text-align: center; }
+  .screenshot-cell img { width: 100%; border: 1px solid #555; display: block; }
+  .screenshot-cell .label { padding: 4px; font-size: 13px; font-weight: bold; background: #2a2a2a; color: #fff; }
+
+  /* 小牌桌網格 */
+  .grid { display: flex; flex-wrap: wrap; gap: 6px; }
   .cell { width: 300px; text-align: center; }
   .cell img { width: 100%; border: 1px solid #444; display: block; }
   .cell .label { padding: 2px; font-size: 12px; }
 </style>
 </head>
 <body>
-  <h3>牌桌辨識即時畫面</h3>
-  <div class="grid" id="grid"></div>
+  <!-- 將標題與按鈕整合成頂部控制列 -->
+  <div class="control-panel">
+    <h3>牌桌辨識即時畫面</h3>
+    <button class="refresh-btn" onclick="refresh()">手動更新畫面</button>
+  </div>
+  
+  <div class="content">
+    <!-- 新增：全螢幕/大截圖專用區塊 -->
+    <div class="screenshot-section">
+      <div class="screenshot-cell" id="screenshot-cell" style="display: none;">
+        <div class="label">完整螢幕截圖 (Screenshot)</div>
+        <img id="screenshot-img" src="" alt="Screenshot">
+      </div>
+    </div>
+
+    <!-- 原有的各桌切圖網格 -->
+    <div class="grid" id="grid"></div>
+  </div>
 
   <script>
     const MAX_TABLES = 12;
     const cells = [];
+    let screenshotElement = null;
 
     // 只建立一次所有格子
     function init() {
+      // 快取大圖的 DOM 物件
+      screenshotElement = {
+        img: document.getElementById('screenshot-img'),
+        cell: document.getElementById('screenshot-cell')
+      };
+
       const grid = document.getElementById('grid');
       for (let i = 0; i < MAX_TABLES; i++) {
         const cell = document.createElement('div');
@@ -43,6 +83,19 @@
     // 雙緩衝:新圖在背景載入,完全載好才換上去,不閃
     function refresh() {
       const t = Date.now();
+
+      # 1. 更新大張的 screenshot.png
+      const scLoader = new Image();
+      scLoader.onload = () => {
+        screenshotElement.img.src = scLoader.src;
+        screenshotElement.cell.style.display = '';
+      };
+      scLoader.onerror = () => {
+        screenshotElement.cell.style.display = 'none'; // 如果沒有大圖就隱藏
+      };
+      scLoader.src = 'screenshot.png?t=' + t;
+
+      # 2. 更新 12 張 live_roi 小圖
       for (let i = 0; i < MAX_TABLES; i++) {
         const target = cells[i];
         const loader = new Image();
@@ -58,8 +111,7 @@
     }
 
     init();
-    refresh();
-    setInterval(refresh, 1000);
+    refresh(); // 首次載入網頁時自動抓取一次
   </script>
 </body>
 </html>
