@@ -170,7 +170,18 @@ class ImageManager:
             d = self.data[self.data['hand'] == hand_cards_string]
             print(f"第[{num_of_table}]桌", datetime.now().strftime("%H:%M:%S"), prettify_cards(self.state['hand_cards']), d.values)
             
-
+        if len(d) > 0:
+            sb_freq = d['sb_push_freq'].values[0]
+            bb_freq = d['bb_call_freq'].values[0]
+            if sb_freq > 0.5 and bb_freq > 0.5:
+                self.click_aof_allin_button()
+            elif sb_freq < 0.1 and bb_freq < 0.1:
+                self.click_aof_fold_button()
+            else:
+                self.click_aof_fold_button()
+        else:
+            self.click_aof_fold_button()
+    
 def prettify_cards(cards):
     prettify_str = ""
     for card in cards.values():
