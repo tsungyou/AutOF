@@ -1,4 +1,5 @@
 templates/*.png
 __pycache__/
+window_regions_caches/*.json
 window_regions_cache.json
 templates/viewer
