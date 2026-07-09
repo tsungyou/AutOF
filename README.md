@@ -32,8 +32,19 @@ flowchart LR
 ## How to build your own strategy?
 [GTO_AOF](https://github.com/tsungyou/AOF-GTO) for more details.
 
-## By Usage:
+### Multitable.py
 
 <p align="center">
-  <img src="templates/screen_shot.png" width="700">
+  <img src="readme_src/multitable_example.png" width="300">
+</p>
+
+### tile_table.py / select_region_by_click_multitable.py
+<p align="center">
+  <img src="readme_src/tilt_window_4.png" width="300">
+  <img src="readme_src/tilt_window_6.png" width="300">
+</p>
+
+### Strategy
+<p align="center">
+  <img src="readme_src/profit_curve.png" width="300">
 </p>
