@@ -272,7 +272,7 @@ class ImageManager:
             print(f"第[{num_of_table}]桌", self.state['position'], datetime.now().strftime("%H:%M:%S"), prettify_cards(self.state['hand_cards']), d.values)
             
             if len(d) > 0:
-                if self.state['position'] != "Big Blind":
+                if self.state['position'] != "Button or Else":
                     self.click_aof_fold_button()
                     return
                 sb_freq = d['sb_push_freq'].values[0]
