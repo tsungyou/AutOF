@@ -302,7 +302,9 @@ class ImageManager:
                     cardA, cardB = hand_cards_string
 
                 if cardA in ['A', 'K', 'Q', 'J', 'T'] and cardB in ['A', 'K', 'Q', 'J', 'T']:
-                    # self.click_normal_mode_bet_button()
+                    self.click_normal_mode_bet_button()
+                    time.sleep(0.5)
+                    self.click_normal_mode_check_button()
                     print(datetime.now().strftime("%H:%M:%S"), cardA, cardB, "bet")
                 else:
                     self.click_normal_mode_fold_button()
