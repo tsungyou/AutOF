@@ -293,22 +293,21 @@ class ImageManager:
         pyautogui.click(x, y)
     
     def run_normal_cash_game_actions(self, num_of_table: int) -> None:
-        if self.state['street'] == "preflop":
-            hand_cards_string = holdem_hand_to_string(self.state['hand_cards'])
-            if hand_cards_string is not None:
-                if len(hand_cards_string) != 2:
-                    cardA, cardB, _ = hand_cards_string
-                else:
-                    cardA, cardB = hand_cards_string
+        hand_cards_string = holdem_hand_to_string(self.state['hand_cards'])
+        if hand_cards_string is not None:
+            if len(hand_cards_string) != 2:
+                cardA, cardB, _ = hand_cards_string
+            else:
+                cardA, cardB = hand_cards_string
 
-                if cardA in ['A', 'K', 'Q', 'J', 'T'] and cardB in ['A', 'K', 'Q', 'J', 'T']:
-                    self.click_normal_mode_bet_button()
-                    time.sleep(0.5)
-                    self.click_normal_mode_check_button()
-                    print(datetime.now().strftime("%H:%M:%S"), cardA, cardB, "bet")
-                else:
-                    self.click_normal_mode_fold_button()
-                    print(datetime.now().strftime("%H:%M:%S"), cardA, cardB, "fold")
+            if cardA in ['A', 'K', 'Q', 'J', 'T'] and cardB in ['A', 'K', 'Q', 'J', 'T']:
+                self.click_normal_mode_bet_button()
+                time.sleep(0.5)
+                self.click_normal_mode_check_button()
+                print(datetime.now().strftime("%H:%M:%S"), cardA, cardB, "bet")
+            else:
+                self.click_normal_mode_fold_button()
+                print(datetime.now().strftime("%H:%M:%S"), cardA, cardB, "fold")
                 
     def run_actions(self, num_of_table: int) -> None:
         # preflop -> big blind -> hu_strategy.csv
