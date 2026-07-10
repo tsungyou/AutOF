@@ -76,7 +76,12 @@ def select_region_by_clicks():
     # 截一張確認,存檔讓你看框對不對
     with mss.MSS() as sct:
         shot = cv2.cvtColor(np.array(sct.grab(region)), cv2.COLOR_BGRA2BGR)
-        cv2.imwrite("templates/region_preview.png", shot)
+        i = ImageManager(mode='TOURNEY')
+        i.update_image(shot)
+        i.get_full_state()
+        vis = i.draw_rois_with_result()
+        cv2.imwrite("templates/region_preview.png", vis)
+        i = None
     print("已存 region_preview.png,確認框住的是整個多桌畫面")
 
     return region

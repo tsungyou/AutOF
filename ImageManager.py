@@ -28,13 +28,23 @@ LABEL_W, LABEL_H = 1330, 946
 CACHE_FILE = "window_regions_cache.json"  # 💡 快取檔案名稱
 
 REF_H, REF_W = 357, 506   # 參考圖 shape = (H, W)
-
 blinds_area = (
     220 * LABEL_H / REF_H,   # y1 ≈ 583
     250 * LABEL_H / REF_H,   # y2 ≈ 662
     241 * LABEL_W / REF_W,   # x1 ≈ 633
     265 * LABEL_W / REF_W,   # x2 ≈ 697
 )
+
+
+
+REF_BETTING_OPTIONS_W, REF_BETTING_OPTIONS_H = 675, 488
+betting_1 = (
+    405 * LABEL_H / REF_BETTING_OPTIONS_H,
+    425 * LABEL_H / REF_BETTING_OPTIONS_H,
+    410 * LABEL_W / REF_BETTING_OPTIONS_W,
+    440 * LABEL_W / REF_BETTING_OPTIONS_W,
+)
+
 # x1, y1, x2, y2
 XYS_ABSOLUTE = {
     "public_card_1": (379, 515, 391, 488),
@@ -59,7 +69,8 @@ XYS_TORUNEY = {
     "bet_button":    (835, 930, 1152, 1315),
     "balance_label": (863, 886, 600, 730),
     "hand_area":     (688, 820, 576, 756),
-    "blinds_area": blinds_area
+    "blinds_area": blinds_area,
+    "betting_1": betting_1
 }
 
 RANK_STRING = {
@@ -280,6 +291,10 @@ class ImageManager:
     
     
     ##### Tourney, Normal Cash Game
+    def click_normal_mode_betting_1_button(self):
+        x, y = self.get_roi_screen_pos("betting_1")
+        pyautogui.click(x, y)
+    
     def click_normal_mode_fold_button(self):
         x, y = self.get_roi_screen_pos("fold_button")
         pyautogui.click(x, y)
@@ -301,7 +316,10 @@ class ImageManager:
                 cardA, cardB = hand_cards_string
 
             if cardA in ['A', 'K', 'Q', 'J', 'T'] and cardB in ['A', 'K', 'Q', 'J', 'T']:
+                self.click_normal_mode_betting_1_button()
                 self.click_normal_mode_bet_button()
+                time.sleep(0.5)
+                self.click_normal_mode_check_button()
                 time.sleep(0.5)
                 self.click_normal_mode_check_button()
                 print(datetime.now().strftime("%H:%M:%S"), cardA, cardB, "bet")
