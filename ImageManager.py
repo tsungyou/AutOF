@@ -48,6 +48,20 @@ XYS_ABSOLUTE = {
     "blinds_area": blinds_area
 }
 
+XYS_TORUNEY = {
+    "public_card_1": (379, 515, 391, 488),
+    "public_card_2": (379, 515, 504, 601),
+    "public_card_3": (379, 515, 617, 714),
+    "public_card_4": (379, 515, 730, 827),
+    "public_card_5": (379, 515, 844, 941),
+    "fold_button":   (835, 930, 811, 973),
+    "check_button":  (835, 930, 982, 1144),
+    "bet_button":    (835, 930, 1152, 1315),
+    "balance_label": (863, 886, 600, 730),
+    "hand_area":     (688, 820, 576, 756),
+    "blinds_area": blinds_area
+}
+
 RANK_STRING = {
     "2": "2", "3": "3", "4": "4", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9", "10": "T", "11": "J", "12": "Q", "13": "K", "1": "A",
 }
@@ -87,7 +101,7 @@ def holdem_hand_to_string(hand_cards, rank_string_map=None):
     return hand_cards_string
 
 class ImageManager:
-    def __init__(self):
+    def __init__(self, mode='AOF'):
         print("載入模型(只做一次)...")
         self.model = YOLO(CARD_MODEL_PATH)
         self.window_model = YOLO(WINDOW_MODEL_PATH)
@@ -99,7 +113,7 @@ class ImageManager:
         self.data = pd.read_csv(STRATEGY_FILE_PATH)
         self.state = None
         self.position_templates = self.get_position_templates()
-        
+        self.xys = XYS_ABSOLUTE if mode == 'AOF' else XYS_TORUNEY
     def get_position_templates(self):
         # 💡 1. 預先準備好你那三張經典截圖的 ROI（請用你原本的截圖路徑）
         # 這裡為了維持辨識穩定，我們轉成灰階（因為字是白的、底是綠的，灰階就能完美區分）
@@ -122,7 +136,7 @@ class ImageManager:
     def _get_px(self):
         h, w = self.current_shape
         out = {}
-        for name, (y1, y2, x1, x2) in XYS_ABSOLUTE.items():
+        for name, (y1, y2, x1, x2) in self.xys.items():
             ry1, ry2 = min(y1, y2), max(y1, y2)
             rx1, rx2 = min(x1, x2), max(x1, x2)
             out[name] = (int(ry1/LABEL_H*h), int(ry2/LABEL_H*h),
@@ -224,7 +238,7 @@ class ImageManager:
             "n_public": n,
             "public_cards": self.get_public_cards(),
             "hand_cards": self.get_hand_cards(),
-            "action": self.get_action_status().value,
+            # "action": self.get_action_status().value,
             "position": self.get_position_by_blinds_area(),
         }
 
@@ -264,6 +278,36 @@ class ImageManager:
         x, y = self.get_roi_screen_pos("aof_allin_button")
         pyautogui.click(x, y)
     
+    
+    ##### Tourney, Normal Cash Game
+    def click_normal_mode_fold_button(self):
+        x, y = self.get_roi_screen_pos("fold_button")
+        pyautogui.click(x, y)
+    
+    def click_normal_mode_check_button(self):
+        x, y = self.get_roi_screen_pos("check_button")
+        pyautogui.click(x, y)
+    
+    def click_normal_mode_bet_button(self):
+        x, y = self.get_roi_screen_pos("bet_button")
+        pyautogui.click(x, y)
+    
+    def run_normal_cash_game_actions(self, num_of_table: int) -> None:
+        if self.state['street'] == "preflop":
+            hand_cards_string = holdem_hand_to_string(self.state['hand_cards'])
+            if hand_cards_string is not None:
+                if len(hand_cards_string) != 2:
+                    cardA, cardB, _ = hand_cards_string
+                else:
+                    cardA, cardB = hand_cards_string
+
+                if cardA in ['A', 'K', 'Q', 'J', 'T'] and cardB in ['A', 'K', 'Q', 'J', 'T']:
+                    # self.click_normal_mode_bet_button()
+                    print(datetime.now().strftime("%H:%M:%S"), cardA, cardB, "bet")
+                else:
+                    self.click_normal_mode_fold_button()
+                    print(datetime.now().strftime("%H:%M:%S"), cardA, cardB, "fold")
+                
     def run_actions(self, num_of_table: int) -> None:
         # preflop -> big blind -> hu_strategy.csv
         if self.state['street'] == "preflop":
