@@ -1,5 +1,7 @@
 from enum import Enum
 
+CARD_MODEL_PATH = "models/card_model.pt"
+STRATEGY_CSV_PATH = "strategy/my_custom_aof_strategy.csv"
 class ActionStatus(Enum):
     playable = "playable"
     waiting = "waiting"

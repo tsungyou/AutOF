@@ -412,11 +412,11 @@ class RegionCapturer:
         with open(path, 'w') as f: json.dump(self.regions, f)
 
 if __name__ == "__main__":
-    from config import CARD_MODEL_PATH 
+    from RoiConfig import CARD_MODEL_PATH, STRATEGY_CSV_PATH
     
     capturer = RegionCapturer()
     vision_engine = VisionEngine(CARD_MODEL_PATH)
-    strategy_engine = StrategyEngine("/Users/tp_mini/Desktop/N8/strategy/my_custom_aof_strategy.csv")  
+    strategy_engine = StrategyEngine(STRATEGY_CSV_PATH)  
     mouse_controller = MouseController() # <--- 實例化全域唯一的滑鼠控制器
     
     with mss.mss() as sct:
