@@ -74,18 +74,12 @@ class StrategyEngine:
                 action_prob = 0.5
             # 4. 決策邏輯
             # 如果機率大於隨機數，則執行 PUSH，否則 FOLD
-            if np.random.rand() < action_prob:
-                action = "PUSH"
-            else:
-                action = "FOLD"
-                
-            print(f"DEBUG: 手牌 {state.hand_str} | 決策: {action} (機率: {action_prob})")
-            
-            return "aof_allin_button" if action == "PUSH" else "aof_fold_button"
-            
+
         except KeyError:
-            print(f"⚠️ 錯誤: 找不到手牌 {state.hand_str} 的策略數據")
-            return "aof_fold_button"
+            action_prob = 0.5
+            print("無資料: 0.5 頻率下注")
+
+        return "aof_allin_button" if np.random.rand() < action_prob else "aof_fold_button"
 
     def _get_column_name(self, state: TableState) -> str:
         # 將條件邏輯抽離，程式更乾淨
@@ -159,8 +153,9 @@ class ActionAnalyzer:
         
         # 確保大牌在前面
         if int(rank2) > int(rank1):
-            rank1, rank2 = rank2, rank1
-            suit1, suit2 = suit2, suit1
+            if int(rank1) != 1: 
+                rank1, rank2 = rank2, rank1
+                suit1, suit2 = suit2, suit1
             
         # 判斷是 suited (同花) 還是 offsuit (不同花)
         suffix = ""
