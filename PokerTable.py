@@ -74,11 +74,11 @@ class StrategyEngine:
                 action_prob = 0.5
             # 4. 決策邏輯
             # 如果機率大於隨機數，則執行 PUSH，否則 FOLD
+            print(f"DEBUG: 手牌 {state.hand_str} | 機率: {action_prob}")
 
         except KeyError:
             action_prob = 0.5
-            print("無資料: 0.5 頻率下注")
-
+            print(f"DEBUG: 手牌 {state.hand_str} | 機率: {action_prob} | 無資料: 0.5 頻率下注")
         return "aof_allin_button" if np.random.rand() < action_prob else "aof_fold_button"
 
     def _get_column_name(self, state: TableState) -> str:
