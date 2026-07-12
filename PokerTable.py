@@ -69,7 +69,9 @@ class StrategyEngine:
         try:
             # 使用 .loc 查詢 Index，確保 hand_str 存在
             action_prob = self.chart.loc[state.hand_str, col_name]
-            
+            # 無資料: 0.5 頻率下注
+            if action_prob is None:
+                action_prob = 0.5
             # 4. 決策邏輯
             # 如果機率大於隨機數，則執行 PUSH，否則 FOLD
             if np.random.rand() < action_prob:
@@ -153,7 +155,7 @@ class ActionAnalyzer:
         suit2, rank2 = c2.split('_')
         
         # 點數對應表，用來比大小 (A > K > Q > J > T)
-        rank_value = {14: 'A', 13: 'K', 12: 'Q', 11: 'J', 10: 'T'}
+        rank_value = {1: 'A', 13: 'K', 12: 'Q', 11: 'J', 10: 'T'}
         
         # 確保大牌在前面
         if int(rank2) > int(rank1):
