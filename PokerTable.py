@@ -71,14 +71,15 @@ class StrategyEngine:
             action_prob = self.chart.loc[state.hand_str, col_name]
             # 無資料: 0.5 頻率下注
             if action_prob is None:
+                print(f"DEBUG: 手牌 {state.hand_str} | 機率: {action_prob} | 無資料: 0.5 頻率下注")
                 action_prob = 0.5
             # 4. 決策邏輯
             # 如果機率大於隨機數，則執行 PUSH，否則 FOLD
             print(f"DEBUG: 手牌 {state.hand_str} | 機率: {action_prob}")
 
-        except KeyError:
+        except KeyError as e:
             action_prob = 0.5
-            print(f"DEBUG: 手牌 {state.hand_str} | 機率: {action_prob} | 無資料: 0.5 頻率下注")
+            print(f"DEBUG: 手牌 {state.hand_str} | 機率: {action_prob} | 錯誤: {e}")
         return "aof_allin_button" if np.random.rand() < action_prob else "aof_fold_button"
 
     def _get_column_name(self, state: TableState) -> str:
