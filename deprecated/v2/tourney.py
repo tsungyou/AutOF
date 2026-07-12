@@ -76,7 +76,12 @@ def select_region_by_clicks():
     # 截一張確認,存檔讓你看框對不對
     with mss.MSS() as sct:
         shot = cv2.cvtColor(np.array(sct.grab(region)), cv2.COLOR_BGRA2BGR)
-        cv2.imwrite("templates/region_preview.png", shot)
+        i = ImageManager(mode='TOURNEY')
+        i.update_image(shot)
+        i.get_full_state()
+        vis = i.draw_rois_with_result()
+        cv2.imwrite("templates/region_preview.png", vis)
+        i = None
     print("已存 region_preview.png,確認框住的是整個多桌畫面")
 
     return region
@@ -116,7 +121,7 @@ def get_regions(rows, cols):
 
 
 def main():
-    manager = ImageManager()
+    manager = ImageManager(mode='TOURNEY')
 
     with mss.MSS() as sct:
         # 1. 先輸入行列
@@ -135,6 +140,7 @@ def main():
             manager.set_screen_offset(region["left"], region["top"])
             
             vis = manager.draw_rois_with_result()
+            os.makedirs("templates", exist_ok=True)
             cv2.imwrite("templates/live_roi_{}.png".format(index), vis)
 
         last_time = 0
@@ -150,8 +156,9 @@ def main():
                 manager.get_full_state()
                 manager.set_screen_offset(region["left"], region["top"])
                 
-                manager.run_actions(num_of_table=index)
+                manager.run_normal_cash_game_actions(num_of_table=index)
                 vis = manager.draw_rois_with_result()
+                os.makedirs("templates", exist_ok=True)
                 cv2.imwrite("templates/live_roi_{}.png".format(index), vis)
 if __name__ == "__main__":
     main()

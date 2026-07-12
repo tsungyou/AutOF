@@ -51,40 +51,71 @@ def split_into_regions(big_box, rows, cols):
             })
     return regions
 
+
+def select_region_by_clicks():
+    """移動滑鼠到兩個角,各按 Enter 記錄座標"""
+    input("把滑鼠移到【左上角】,然後按 Enter...")
+    x1, y1 = pyautogui.position()
+    print(f"左上角: ({x1}, {y1})")
+
+    input("把滑鼠移到【右下角】,然後按 Enter...")
+    x2, y2 = pyautogui.position()
+    print(f"右下角: ({x2}, {y2})")
+
+    left, top = min(x1, x2), min(y1, y2)
+    width, height = abs(x2 - x1), abs(y2 - y1)
+
+    # 防呆:框太小代表可能沒移動或按錯
+    if width < 50 or height < 50:
+        print("⚠️ 選取範圍太小,請重新選取")
+        return select_region_by_clicks()   # 重來一次
+
+    region = {"left": left, "top": top, "width": width, "height": height}
+    print("選取區域:", region)
+
+    # 截一張確認,存檔讓你看框對不對
+    with mss.MSS() as sct:
+        shot = cv2.cvtColor(np.array(sct.grab(region)), cv2.COLOR_BGRA2BGR)
+        cv2.imwrite("templates/region_preview.png", shot)
+    print("已存 region_preview.png,確認框住的是整個多桌畫面")
+
+    return region
+
 def cache_path(rows, cols):
     """每種行列一個快取檔"""
     return f"window_regions_caches/region_cache_{rows}x{cols}.json"
 
+def get_regions(rows, cols):
+    path = cache_path(rows, cols)   # region_cache_2x2.json 之類
 
-def get_regions(sct, manager, rows, cols, screen_index=0):
-    path = cache_path(rows, cols)
-
-    # 有快取就問要不要用
+    # 有快取問要不要用
     if os.path.exists(path):
         while True:
-            choice = input(f"發現 {rows}x{cols} 的快取,是否使用?(y/n): ").strip().lower()
+            choice = input(f"發現 {rows}x{cols} 快取,使用?(y/n): ").strip().lower()
             if choice == 'y':
                 with open(path) as f:
                     regions = json.load(f)
-                print(f"✅ 已載入 {rows}x{cols} 快取,共 {len(regions)} 桌")
+                print(f"✅ 載入 {rows}x{cols} 快取,{len(regions)} 桌")
                 return regions
             elif choice == 'n':
-                print("🔄 重新偵測並覆蓋...")
                 break
             else:
                 print("請輸入 y 或 n")
 
-    # 沒快取,或選擇重新偵測:偵測大框 + 切割
-    big_box = detect_big_box(sct, manager.window_model, screen_index=screen_index)
+    # 沒快取或選重來:手動框 + 切割
+    big_region = select_region_by_clicks()      # 滑鼠框大畫面
+    big_box = (big_region["left"], big_region["top"],
+               big_region["left"] + big_region["width"],
+               big_region["top"] + big_region["height"])
     regions = split_into_regions(big_box, rows, cols)
 
-    # 存快取(蓋過去)
     with open(path, 'w') as f:
         json.dump(regions, f, indent=4)
-    print(f"💾 已儲存 {rows}x{cols} 快取至 {path}")
+    print(f"💾 已存 {rows}x{cols} 快取")
     return regions
 
-def main(screen_index=0):
+
+def main():
     manager = ImageManager()
 
     with mss.MSS() as sct:
@@ -93,7 +124,7 @@ def main(screen_index=0):
         cols = int(input("幾列 (cols): "))
 
         # 2. 依行列取 region(有快取問要不要用,沒有就偵測)
-        regions = get_regions(sct, manager, rows, cols, screen_index=screen_index)
+        regions = get_regions(rows, cols)
         print(f"使用 {len(regions)} 桌")
 
         # screen init
@@ -101,7 +132,6 @@ def main(screen_index=0):
             frame = cv2.cvtColor(np.array(sct.grab(region)), cv2.COLOR_BGRA2BGR)
             manager.update_image(frame)
             manager.get_full_state()
-            manager.set_screen_offset(region["left"], region["top"])
             
             vis = manager.draw_rois_with_result()
             cv2.imwrite("templates/live_roi_{}.png".format(index), vis)
@@ -120,6 +150,7 @@ def main(screen_index=0):
                 manager.set_screen_offset(region["left"], region["top"])
                 
                 manager.run_actions(num_of_table=index)
-                
+                vis = manager.draw_rois_with_result()
+                cv2.imwrite("templates/live_roi_{}.png".format(index), vis)
 if __name__ == "__main__":
     main()

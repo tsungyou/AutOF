@@ -326,8 +326,6 @@ def main():
         
 
         
-        viewer_path = os.path.abspath("templates/viewer.html")
-        subprocess.run(["open", viewer_path])
         
         for box in result.boxes:
             x1, y1, x2, y2 = box.xyxy[0].tolist()

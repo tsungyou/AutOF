@@ -278,10 +278,6 @@ def main():
         print("❌ 未偵測到任何牌桌視窗，程式結束。")
         return
 
-    viewer_path = os.path.abspath("templates/viewer.html")
-    subprocess.run(["open", viewer_path])
-    
-
     with mss.MSS() as sct:
         last_time = 0
         pic_time = 0
